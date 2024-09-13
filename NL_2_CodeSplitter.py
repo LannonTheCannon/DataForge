@@ -1,6 +1,10 @@
 import streamlit as st
 import openai
 import os
+import pandas as pd
+import time
+from io import StringIO
+from data import load_data  # Import the load_data function you provided
 
 # Set your OpenAI API key
 openai.api_key = st.secrets.get("OPENAI_API_KEY")
@@ -11,104 +15,140 @@ if not openai.api_key:
 # Set page configuration
 st.set_page_config(page_title="Code Generator Assistant", page_icon="💻", layout="wide")
 
-# CSS to style the app
-st.markdown("""
-    <style>
-    .main {
-        background-color: #f5f5f5;
-    }
-    .stTextInput > label {
-        font-size: 18px;
-        font-weight: 600;
-    }
-    .code-section {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
-st.title("💻 Code Generator Assistant")
-st.write("Turn your conversational requests into Python, DAX, and SQL code.")
+# Helper function to summarize dataset
+def prepare_dataset_summary(df):
+    buffer = StringIO()
+    df.info(buf=buffer)
+    info_string = buffer.getvalue()
 
-# Initialize session state
-if "history" not in st.session_state:
-    st.session_state.history = []
+    summary = f"""
+    Dataset Summary:
 
-def generate_code(user_input):
-    prompt = f"""
-You are an expert programmer proficient in Python (for data analysis using pandas), DAX (for PowerBI), and SQL (for PostgreSQL). 
+    Number of rows: {len(df)}
+    Number of columns: {len(df.columns)}
 
-Please generate code in all three languages that accomplishes the following request:
+    Column descriptions:
+    {info_string}
 
-'{user_input}'
+    Basic statistics:
+    {df.describe().to_string()}
 
-For each language, provide the code in separate sections titled 'Python Code', 'DAX Code', and 'SQL Code'.
+    Sample data (first 5 rows):
+    {df.head().to_string()}
+    """
+    return summary
 
-Ensure that the code is well-commented, easy to understand, and formatted properly.
 
-If any assumptions are needed, please state them in comments within the code.
-"""
+# Function to get assistant response (Python, DAX, SQL code generation)
+def generate_code(client, assistant_id, thread_id, user_input):
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",  # Use 'gpt-3.5-turbo' if 'gpt-4' is not available
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that generates code based on user requests."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.0,  # Set temperature to 0 for deterministic output
+        # Add the user's message to the thread
+        client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=f"Generate Python, DAX, and SQL code for the following request:\n\n'{user_input}'"
         )
 
-        code_response = response['choices'][0]['message']['content']
-        return code_response.strip()
+        # Create a run for the assistant
+        run = client.beta.threads.runs.create(
+            thread_id=thread_id,
+            assistant_id=assistant_id
+        )
+
+        # Wait for the run to complete
+        while True:
+            run_status = client.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run.id)
+            if run_status.status == 'completed':
+                break
+            time.sleep(1)
+
+        # Retrieve the assistant's response
+        messages = client.beta.threads.messages.list(thread_id=thread_id)
+
+        # Return the latest assistant message containing the generated code
+        return messages.data[0].content[0].text.value
     except Exception as e:
         st.error(f"Error generating code: {str(e)}")
         return None
 
-# User input
-user_input = st.text_input("Enter your request:", "")
+# Function to display AI chat with code generation
+def display_ai_chat(df, client, assistant_id, thread_id):
+    st.header("Chat with AI about the Dataset")
 
-if st.button("Generate Code") and user_input:
-    with st.spinner("Generating code..."):
-        code_output = generate_code(user_input)
-        if code_output:
-            st.session_state.history.append((user_input, code_output))
-            # Display the generated code
-            st.markdown("## Generated Code")
-            # Split the code into sections based on the headings
-            sections = code_output.split('\n')
-            current_section = None
-            code_text = ""
-            for line in sections:
-                if "Python Code" in line:
-                    if code_text:
-                        st.code(code_text.strip(), language=current_section.lower())
-                    current_section = "Python"
-                    st.markdown(f"### {current_section} Code")
-                    code_text = ""
-                elif "DAX Code" in line:
-                    if code_text:
-                        st.code(code_text.strip(), language=current_section.lower())
-                    current_section = "DAX"
-                    st.markdown(f"### {current_section} Code")
-                    code_text = ""
-                elif "SQL Code" in line:
-                    if code_text:
-                        st.code(code_text.strip(), language=current_section.lower())
-                    current_section = "SQL"
-                    st.markdown(f"### {current_section} Code")
-                    code_text = ""
-                else:
-                    code_text += line + '\n'
-            if code_text:
-                st.code(code_text.strip(), language=current_section.lower())
+    if 'messages' not in st.session_state:
+        st.session_state.messages = []
 
-# Display history
-if st.session_state.history:
-    st.markdown("---")
-    st.markdown("## Conversation History")
-    for i, (inp, outp) in enumerate(reversed(st.session_state.history)):
-        with st.expander(f"Request {len(st.session_state.history) - i}: {inp}"):
-            st.markdown(outp)
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if prompt := st.chat_input("What code would you like to generate based on the dataset?"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            full_response = generate_code(client, assistant_id, thread_id, prompt)
+            message_placeholder.markdown(full_response)
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
+
+
+# Function to display the dashboard
+def display_dashboard(df):
+    st.header("Credit Card Fraud Dashboard")
+    st.write("Sample Data Preview:")
+    st.dataframe(df.head())
+
+
+# Function to display a more detailed data explorer
+def display_data_explorer(df):
+    st.header("Data Explorer")
+    st.write(df.describe())
+
+
+# Sidebar for navigation
+def sidebar():
+    with st.sidebar:
+        st.title("🤖 AI Code & Data Explorer")
+        st.markdown("---")
+        st.markdown("## Navigation")
+        page = st.radio("Go to", ["Dashboard", "Data Explorer", "AI Chat"])
+        st.markdown("---")
+        st.markdown("## About")
+        st.info(
+            "This dashboard uses AI to analyze credit card fraud data and generate Python, DAX, and SQL code from conversational input."
+        )
+    return page
+
+
+# Main function
+def main():
+    # Initialize OpenAI client
+    client = openai.OpenAI(api_key=st.secrets['OPENAI_API_KEY'])
+
+    # Define your assistant and thread IDs
+    ASSISTANT_ID = 'asst_Gprcn49z0jmzvKpKaWeU7ZAw'  # Replace with your actual assistant ID
+    THREAD_ID = "thread_0du078hnyl1z7AbIM7JyebsX"  # Replace with your actual thread ID
+
+    # Load dataset
+    df = load_data("./data_pkl")
+    if df.empty:
+        st.error("The loaded dataset is empty or not found. Please check your data folder.")
+        return
+
+    # Sidebar navigation
+    page = sidebar()
+
+    # Display appropriate page
+    if page == "Dashboard":
+        display_dashboard(df)
+    elif page == "Data Explorer":
+        display_data_explorer(df)
+    elif page == "AI Chat":
+        display_ai_chat(df, client, ASSISTANT_ID, THREAD_ID)
+
+
+if __name__ == "__main__":
+    main()
