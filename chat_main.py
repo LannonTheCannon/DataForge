@@ -33,8 +33,6 @@ class StreamlitResponse(ResponseParser):
         st.write(result["value"])
         return
 
-
-
 def prepare_dataset_summary(df):
     buffer = StringIO()
     df.info(buf=buffer)
@@ -127,7 +125,7 @@ def display_ai_chat(df, client, assistant_id, thread_id):
 def display_pandas_chat():
     st.write("Chat with Credit Card Fraud Dataset")
 
-    df = load_data("./data")
+    df = load_data("./data_pkl")
 
     with st.expander("Dataframe Preview"):
         st.write(df.tail(3))
@@ -157,7 +155,7 @@ def display_dashboard(df):
 
 def display_data_explorer(df):
     st.header("Data Explorer")
-    st.write("This is a placeholder for the data explorer. You can add more detailed data analysis here.")
+    st.write("This is a placeholder for the data explorer. You can add more detailed data_pkl analysis here.")
     st.write(df.describe())
 
 
@@ -170,7 +168,7 @@ def sidebar():
         st.markdown("---")
         st.markdown("## About")
         st.info(
-            "This dashboard uses AI to analyze credit card fraud data. You can explore the data, chat with an AI assistant, and get insights on the dataset.")
+            "This dashboard uses AI to analyze credit card fraud data. You can explore the data_pkl, chat with an AI assistant, and get insights on the dataset.")
     return page
 
 
@@ -182,12 +180,12 @@ def main():
     THREAD_ID = "thread_0du078hnyl1z7AbIM7JyebsX"
 
     try:
-        df = load_data("./data")
+        df = load_data("./data_pkl")
         if df.empty:
-            st.error("The loaded dataset is empty. Please check your data source.")
+            st.error("The loaded dataset is empty. Please check your data_pkl source.")
             return
     except Exception as e:
-        st.error(f"Error loading data: {str(e)}")
+        st.error(f"Error loading data_pkl: {str(e)}")
         return
 
     dataset_summary = prepare_dataset_summary(df)
