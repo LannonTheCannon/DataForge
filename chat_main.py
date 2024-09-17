@@ -3,6 +3,8 @@ from io import StringIO
 from data import load_data
 import time
 import streamlit as st
+from story_page import display_data_story
+
 from pandasai import SmartDataframe
 from pandasai.callbacks import BaseCallback
 from pandasai.llm import OpenAI
@@ -164,7 +166,7 @@ def sidebar():
         st.title("🤖 AI Credit Card Fraud Analysis")
         st.markdown("---")
         st.markdown("## Navigation")
-        page = st.radio("Go to", ["Dashboard", "Data Explorer", "AI Chat", "Pandas Chat"])
+        page = st.radio("Go to", ["Dashboard", "Story Telling", "Data Explorer", "AI Chat", "Pandas Chat"])
         st.markdown("---")
         st.markdown("## About")
         st.info(
@@ -195,6 +197,8 @@ def main():
 
     if page == "Dashboard":
         display_dashboard(df)
+    elif page == 'Story Telling':
+        display_data_story()
     elif page == "Data Explorer":
         display_data_explorer(df)
     elif page == "AI Chat":
