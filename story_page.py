@@ -12,7 +12,6 @@ def display_data_story():
         "Prologue: The Mystery Begins",
         "Chapter 1: The Time Anomaly",
         "Chapter 2: The Amount Myth",
-        "Chapter 3: The Timing Puzzle",
         "Epilogue: Cracking the Code"
     ]
 
@@ -23,7 +22,7 @@ def display_data_story():
     if selected_section == "Prologue: The Mystery Begins":
         st.header("Prologue: The Mystery Begins")
         st.write("In a world where digital transactions reign supreme, a sinister force lurks in the shadows...")
-        st.image("https://placehold.co/600x400?text=Credit+Card+Fraud+Mystery",
+        st.image("./images/creditcard.png", width=300, use_column_width="auto",
                  caption="The world of digital transactions")
         st.write(
             "Our mission: to analyze 1.7 million transactions and unmask the patterns of fraud hiding in plain sight.")
@@ -59,20 +58,20 @@ def display_data_story():
         st.write(
             "Surprisingly, fraudulent transactions often involve smaller amounts. They're flying under the radar, hoping to go unnoticed!")
 
-    elif selected_section == "Chapter 3: The Timing Puzzle":
-        st.header("Chapter 3: The Timing Puzzle")
-        st.write("The plot thickens as we uncover the fraudsters' favorite times to strike...")
-
-        # Create a heatmap of fraud by hour and day of week
-        df['hour'] = pd.to_datetime(df['TX_DATETIME']).dt.hour
-        df['day_of_week'] = pd.to_datetime(df['TX_DATETIME']).dt.dayofweek
-        fraud_by_time = df.groupby(['hour', 'day_of_week'])['TX_FRAUD'].mean().unstack()
-        fig = px.imshow(fraud_by_time, title='Fraud Rate by Hour and Day of Week',
-                        labels=dict(x="Day of Week", y="Hour of Day", color="Fraud Rate"))
-        st.plotly_chart(fig)
-
-        st.write(
-            "Astonishingly, fraud peaks at 2 PM on Tuesdays! Why? Because that's when people are most distracted at work, less likely to notice a small, strange transaction.")
+    # elif selected_section == "Chapter 3: The Timing Puzzle":
+    #     st.header("Chapter 3: The Timing Puzzle")
+    #     st.write("The plot thickens as we uncover the fraudsters' favorite times to strike...")
+    #
+    #     # Create a heatmap of fraud by hour and day of week
+    #     df['hour'] = pd.to_datetime(df['TX_DATETIME']).dt.hour
+    #     df['day_of_week'] = pd.to_datetime(df['TX_DATETIME']).dt.dayofweek
+    #     fraud_by_time = df.groupby(['hour', 'day_of_week'])['TX_FRAUD'].mean().unstack()
+    #     fig = px.imshow(fraud_by_time, title='Fraud Rate by Hour and Day of Week',
+    #                     labels=dict(x="Day of Week", y="Hour of Day", color="Fraud Rate"))
+    #     st.plotly_chart(fig)
+    #
+    #     st.write(
+    #         "Astonishingly, fraud peaks at 2 PM on Tuesdays! Why? Because that's when people are most distracted at work, less likely to notice a small, strange transaction.")
 
     elif selected_section == "Epilogue: Cracking the Code":
         st.header("Epilogue: Cracking the Code")
