@@ -15,8 +15,3 @@ matplotlib==3.4.3
 # ML/AI dependencies
 scikit-learn==1.2.1
 transformers==4.24.0
-
-# Utility
-tqdm==4.64.1
-python-dateutil==2.8.2
-requests==2.32.3
