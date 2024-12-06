@@ -1,5 +1,3 @@
-_anaconda_depends==2023.09
-_ipyw_jlab_nb_ext_conf==0.1.0
 absl-py==1.0.0
 aiobotocore==2.4.2
 aiohttp==3.8.5
