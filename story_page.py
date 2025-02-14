@@ -2,6 +2,10 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 from data import load_data
+import streamlit as st
+import plotly.express as px
+import pandas as pd
+from data import load_data
 
 
 def display_data_story():
@@ -11,7 +15,6 @@ def display_data_story():
     story_sections = [
         "Prologue: The Mystery Begins",
         "Chapter 1: The Time Anomaly",
-        "Chapter 2: The Amount Myth",
         "Epilogue: Cracking the Code"
     ]
 
@@ -46,17 +49,17 @@ def display_data_story():
         st.write(
             "Notice the strange spike? It coincides perfectly with a major online shopping event. The fraudsters were hiding in the chaos of increased transaction volume!")
 
-    elif selected_section == "Chapter 2: The Amount Myth":
-        st.header("Chapter 2: The Amount Myth")
-        st.write(
-            "Conventional wisdom suggests that fraudsters go after big transactions. But what if we told you that wasn't the case?")
-
-        # Create a box plot of transaction amounts for fraudulent and non-fraudulent transactions
-        fig = px.box(df, x='TX_FRAUD', y='TX_AMOUNT', points="all", title='Transaction Amounts: Fraud vs Non-Fraud')
-        st.plotly_chart(fig)
-
-        st.write(
-            "Surprisingly, fraudulent transactions often involve smaller amounts. They're flying under the radar, hoping to go unnoticed!")
+    # elif selected_section == "Chapter 2: The Amount Myth":
+    #     st.header("Chapter 2: The Amount Myth")
+    #     st.write(
+    #         "Conventional wisdom suggests that fraudsters go after big transactions. But what if we told you that wasn't the case?")
+    #
+    #     # Create a box plot of transaction amounts for fraudulent and non-fraudulent transactions
+    #     fig = px.box(df, x='TX_FRAUD', y='TX_AMOUNT', points="all", title='Transaction Amounts: Fraud vs Non-Fraud')
+    #     st.plotly_chart(fig)
+    #
+    #     st.write(
+    #         "Surprisingly, fraudulent transactions often involve smaller amounts. They're flying under the radar, hoping to go unnoticed!")
 
     # elif selected_section == "Chapter 3: The Timing Puzzle":
     #     st.header("Chapter 3: The Timing Puzzle")
@@ -83,9 +86,6 @@ def display_data_story():
         st.write("2. Small transactions are their weapon of choice.")
         st.write("3. They strike when we're most distracted.")
 
-        # Add a fun interactive element
-        savings_estimate = st.slider("Estimate the potential savings from improved fraud detection:", 0, 1000000,
-                                     500000, format="$%d")
         st.success(
             f"By implementing these insights, we could potentially save up to ${savings_estimate:,} annually in prevented fraud!")
 
